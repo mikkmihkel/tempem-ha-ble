@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+# ESPHome
+esphome/secrets.yaml
+esphome/.esphome/
+.esphome/
+secrets.yaml

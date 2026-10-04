@@ -1,0 +1,7 @@
+{
+  "name": "Tempem BLE",
+  "homeassistant": "2025.3.0",
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "tempem_ble.zip"
+}
