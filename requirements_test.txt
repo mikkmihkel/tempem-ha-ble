@@ -1,0 +1,18 @@
+# Test dependencies (Python 3.13). The pytest-homeassistant-custom-component
+# version pins the Home Assistant release the tests run against
+# (0.13.316 -> Home Assistant 2026.2.3).
+pytest-homeassistant-custom-component==0.13.316
+
+# Libraries of the Home Assistant integrations the tests set up
+# (versions as pinned by Home Assistant 2026.2.3).
+bleak==2.1.1
+bleak-retry-connector==4.4.3
+bluetooth-adapters==2.1.0
+bluetooth-auto-recovery==1.5.3
+bluetooth-data-tools==1.28.4
+dbus-fast==3.1.2
+habluetooth==5.8.0
+aiousbwatcher==1.1.1
+pyserial==3.5
+
+ruff==0.15.20
