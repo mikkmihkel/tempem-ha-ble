@@ -1,0 +1,246 @@
+# =============================================================================
+# Tempem remote-site BLE gateway (ESP32-C6, e.g. DFRobot FireBeetle 2 ESP32-C6)
+#
+# Listens for Tempem / Dusun temperature-humidity beacons and forwards them over
+# HTTPS to the Home Assistant `tempem_ble` integration's webhook:
+#
+#   POST https://<your-domain>/api/webhook/<webhook_id>   (JSON, every ${post_interval})
+#
+# Built for sites where Home Assistant is only reachable through a public HTTPS
+# endpoint (e.g. a Cloudflare Tunnel): nothing has to connect *to* this device,
+# so there is no `api:` (native API) here. No per-sensor configuration either:
+# every valid Tempem beacon in range is forwarded, battery levels are polled
+# over GATT for every beacon that has been heard (up to max_targets), and Home Assistant
+# auto-discovers the sensors.
+#
+# Setup: see README.md next to this file.
+#   1. cp secrets.yaml.example secrets.yaml  and fill in tempem_webhook_url etc.
+#   2. esphome run tempem-remote-gateway.yaml   (USB, at home)
+#   3. On site: power it up, join the "${ap_ssid}" Wi-Fi from a phone and pick
+#      the site Wi-Fi in the captive portal (or use https://web.esphome.io over
+#      USB -> "Connect" -> Wi-Fi via Improv).
+# =============================================================================
+
+substitutions:
+  name: tempem-remote
+  friendly_name: Tempem Remote Gateway
+  # Fallback hotspot shown when the configured Wi-Fi cannot be reached.
+  ap_ssid: Tempem-Remote-Setup
+  # How often the batch is posted to Home Assistant (also the heartbeat).
+  post_interval: 60s
+  # How often each beacon's battery is read over GATT (connects to it briefly).
+  battery_poll_interval: 168h # 7 days
+  log_level: INFO
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  # Set to true when flashing several gateways from this file; Home Assistant
+  # tells gateways apart by their MAC address either way.
+  name_add_mac_suffix: false
+  min_version: 2026.9.0
+  project:
+    name: mikkmihkel.tempem-remote-gateway
+    version: "1.0.0"
+
+esp32:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+external_components:
+  # Local checkout (this repository):
+  - source:
+      type: local
+      path: components
+    components: [tempem_battery_poller, tempem_forwarder]
+  # Or straight from GitHub, without a checkout (ESPHome looks in the
+  # repository's esphome/components folder automatically):
+  # - source: github://mikkmihkel/tempem-ha-ble@main
+  #   components: [tempem_battery_poller, tempem_forwarder]
+  #   refresh: 1d
+  # Explicit form:
+  # - source:
+  #     type: git
+  #     url: https://github.com/mikkmihkel/tempem-ha-ble
+  #     ref: main
+  #     path: esphome/components
+  #   components: [tempem_battery_poller, tempem_forwarder]
+
+logger:
+  level: ${log_level}
+
+# -----------------------------------------------------------------------------
+# Network / on-site provisioning
+# -----------------------------------------------------------------------------
+wifi:
+  # May stay placeholders: on site the credentials are entered through the
+  # captive portal or Improv and stored in flash. They survive reboots, but
+  # not an update built from a changed config or another ESPHome version
+  # (see README), so fill in the real site Wi-Fi before building updates.
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # If no configured network can be joined for `ap_timeout`, open a hotspot
+  # with a captive portal to choose the site Wi-Fi. While the hotspot is up
+  # the device does not reboot itself.
+  ap:
+    ssid: ${ap_ssid}
+    password: !secret ap_password
+    ap_timeout: 1min
+
+captive_portal:
+
+# Wi-Fi setup over USB from https://web.esphome.io (Improv serial).
+improv_serial:
+
+# Local web UI (http://<device-ip>/ or http://${name}.local/) for on-site
+# troubleshooting: live logs, last webhook result, buttons. Protected because
+# the logs can contain the webhook URL. Remove the whole block to save flash
+# and RAM.
+web_server:
+  port: 80
+  version: 3
+  auth:
+    type: digest
+    username: admin
+    password: !secret web_password
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+  # Optional: remote updates pulled over HTTPS, e.g. from a firmware.bin you
+  # publish somewhere (needs an action/button that calls ota.http_request.flash):
+  # - platform: http_request
+
+# -----------------------------------------------------------------------------
+# HTTPS client used for the webhook
+# -----------------------------------------------------------------------------
+http_request:
+  # Server certificate is verified against the ESP-IDF CA bundle (covers
+  # Cloudflare / Let's Encrypt / Google Trust Services).
+  verify_ssl: true
+  timeout: 10s
+  # A redirect (e.g. Cloudflare Access login page) must show up as an error
+  # instead of being followed as a GET.
+  follow_redirects: false
+  useragent: tempem-remote-gateway/1.0 ESPHome
+
+# -----------------------------------------------------------------------------
+# BLE
+# -----------------------------------------------------------------------------
+esp32_ble_tracker:
+  scan_parameters:
+    # Active scanning requests scan responses, which carry the beacon name.
+    active: true
+    interval: 320ms
+    window: 300ms
+    continuous: true
+
+tempem_battery_poller:
+  id: battery_poller
+  # No hard-coded MACs: every beacon that sends a valid Tempem frame becomes a
+  # battery poll target (up to max_targets).
+  auto_discover: true
+  max_targets: 32
+  interval: ${battery_poll_interval}
+  # First cycle after boot; leaves time to hear all beacons first.
+  first_poll_delay: 120s
+  # Failed reads are retried this often, max_retries times per cycle.
+  retry_interval: 1h
+  max_retries: 3
+  on_battery:
+    - lambda: id(fwd).add_battery(mac, level);
+
+tempem_forwarder:
+  id: fwd
+  max_devices: 40
+  max_advert_age: 600s
+  posts_ok:
+    name: Webhook posts ok
+  posts_failed:
+    name: Webhook posts failed
+  last_http_status:
+    name: Webhook last HTTP status
+  last_result:
+    name: Webhook last result
+  devices:
+    name: Tempem beacons tracked
+  pending_batteries:
+    name: Battery readings pending
+
+# -----------------------------------------------------------------------------
+# Posting to Home Assistant
+# -----------------------------------------------------------------------------
+script:
+  - id: post_to_home_assistant
+    mode: single
+    then:
+      - if:
+          # Skips the tick when Wi-Fi is down (and never overlaps posts).
+          condition:
+            lambda: return id(fwd).ready_to_post();
+          then:
+            - http_request.post:
+                url: !secret tempem_webhook_url
+                request_headers:
+                  Content-Type: application/json
+                body: !lambda return id(fwd).build_payload();
+                # The integration answers {"ok": true, ...}; Home Assistant
+                # answers 200 with an empty body for unknown webhook ids, so
+                # the body is needed to know the batch really arrived.
+                capture_response: true
+                max_response_buffer_size: 256B
+                on_response:
+                  then:
+                    - lambda: id(fwd).on_post_result(response->status_code, body);
+                on_error:
+                  then:
+                    - lambda: id(fwd).on_post_error();
+
+interval:
+  # Posts every interval even when nothing changed (heartbeat), so Home
+  # Assistant can tell the gateway is alive.
+  - interval: ${post_interval}
+    then:
+      - script.execute: post_to_home_assistant
+
+# -----------------------------------------------------------------------------
+# Local diagnostics (web UI / logs only - there is no API connection)
+# -----------------------------------------------------------------------------
+button:
+  - platform: template
+    name: Post to Home Assistant now
+    entity_category: config
+    on_press:
+      - script.execute: post_to_home_assistant
+  - platform: template
+    name: Poll batteries now
+    entity_category: config
+    on_press:
+      - lambda: id(battery_poller).trigger_now();
+  - platform: restart
+    name: Restart
+    entity_category: config
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    entity_category: diagnostic
+    update_interval: 60s
+  - platform: wifi_signal
+    name: Wi-Fi signal
+    entity_category: diagnostic
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: ESPHome version
+    hide_timestamp: true
+  - platform: wifi_info
+    ip_address:
+      name: IP address
+    ssid:
+      name: Connected SSID
+    mac_address:
+      name: MAC address

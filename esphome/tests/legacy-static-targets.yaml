@@ -1,0 +1,64 @@
+# Config-validation test: the original single-site gateway style (static
+# `targets:` with battery sensors, diagnostics sensor ids, no auto-discovery)
+# must still validate with the extended tempem_battery_poller.
+#   esphome config tests/legacy-static-targets.yaml
+esphome:
+  name: tempem-legacy-test
+
+esp32:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [tempem_battery_poller]
+
+logger:
+
+wifi:
+  ssid: "test-ssid"
+  password: "test-password"
+
+api:
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+tempem_battery_poller:
+  id: battery_poller
+  interval: 168h
+  success_total_sensor_id: batt_poll_success_total
+  failure_total_sensor_id: batt_poll_fail_total
+  last_cycle_duration_sensor_id: batt_poll_last_cycle_duration_s
+  targets:
+    - mac_address: "C0:FF:EE:00:12:34"
+      battery_sensor_id: bat_1234
+    - mac_address: "C0:FF:EE:00:56:78"
+      battery_sensor_id: bat_5678
+
+sensor:
+  - platform: template
+    id: bat_1234
+    name: "TempemSens 1234 Battery"
+    unit_of_measurement: "%"
+    device_class: battery
+  - platform: template
+    id: bat_5678
+    name: "TempemSens 5678 Battery"
+    unit_of_measurement: "%"
+    device_class: battery
+  - platform: template
+    id: batt_poll_success_total
+    name: "Battery Poll Success Total"
+  - platform: template
+    id: batt_poll_fail_total
+    name: "Battery Poll Fail Total"
+  - platform: template
+    id: batt_poll_last_cycle_duration_s
+    name: "Battery Poll Last Cycle Duration"
+    unit_of_measurement: "s"
