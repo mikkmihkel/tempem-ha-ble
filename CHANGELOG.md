@@ -60,6 +60,7 @@ First release.
 - CI: hassfest, HACS validation, ruff, pytest, ESPHome config validation, forwarder host tests.
   The test suite was run against Home Assistant 2025.3.0 through 2026.2.3.
 - Tag-driven release workflow that checks the tag, `manifest.json` and this changelog agree.
+- MIT license.
 
 [Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/releases/tag/v0.1.0
