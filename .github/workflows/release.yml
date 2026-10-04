@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches manifest version
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(jq -r .version custom_components/tempem_ble/manifest.json)
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::Tag v$tag does not match manifest.json version $manifest"
+            exit 1
+          fi
+          if ! grep -q "^## \[$tag\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section for $tag"
+            exit 1
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes
+        run: |
+          awk -v v="${{ steps.version.outputs.version }}" '
+            $0 ~ "^## \\[" v "\\]" {found=1; next}
+            found && /^## \[/ {exit}
+            found && /^\[[^]]+\]: / {next}
+            found {print}
+          ' CHANGELOG.md > release-notes.md
+          cat release-notes.md
+
+      - name: Build HACS zip
+        run: |
+          cd custom_components/tempem_ble
+          zip -r "$GITHUB_WORKSPACE/tempem_ble.zip" . -x '__pycache__/*' '*.pyc'
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: tempem_ble.zip
