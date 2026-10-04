@@ -1,0 +1,80 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Tempem BLE",
+        "description": "Tempem beacons heard by Home Assistant's Bluetooth (local adapter, ESPHome Bluetooth proxies or a remote gateway) are discovered automatically. You can also pick one by hand, or add a remote gateway for a site on another network.",
+        "menu_options": {
+          "pick_sensor": "Add a Tempem sensor that Home Assistant can hear",
+          "gateway": "Add a remote gateway (ESP32 posting over the internet)"
+        }
+      },
+      "bluetooth_confirm": {
+        "description": "Add {name} ({address}), heard via {source}?"
+      },
+      "pick_sensor": {
+        "title": "Choose a Tempem sensor",
+        "data": {
+          "address": "Sensor"
+        }
+      },
+      "gateway": {
+        "title": "Remote gateway",
+        "description": "A remote gateway is an ESP32 running the Tempem ESPHome firmware at a site that cannot reach Home Assistant's local network. It posts the beacons it hears to a webhook on your public Home Assistant URL (e.g. through a Cloudflare Tunnel).",
+        "data": {
+          "name": "Name"
+        }
+      },
+      "gateway_url": {
+        "title": "Webhook URL",
+        "description": "Put this URL into the gateway's `secrets.yaml` as `tempem_webhook_url` and flash it:\n\n`{webhook_url}`\n\nTreat it like a password: anyone who knows it can post readings. You can see it again later under this entry's **Configure** button. If the URL does not start with your public domain, set **Settings → System → Network → Home Assistant URL → Internet**."
+      }
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "already_in_progress": "Configuration for this device is already in progress.",
+      "no_devices_found": "No Tempem sensors are being heard right now. Make sure the Bluetooth integration is set up and the sensor is in range.",
+      "not_supported": "This device is not a Tempem/Dusun temperature beacon."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Battery polling",
+        "description": "The battery level is not broadcast; it is read by connecting to the sensor. Connecting costs the sensor some battery, so keep this infrequent. Set to 0 to never connect. Sensors behind a remote gateway are polled by the gateway itself.",
+        "data": {
+          "battery_poll_hours": "Read battery every (hours)"
+        }
+      },
+      "gateway": {
+        "title": "Remote gateway",
+        "description": "Webhook URL for this gateway (put it in the gateway's `secrets.yaml` as `tempem_webhook_url`):\n\n`{webhook_url}`"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
+    },
+    "sensor": {
+      "last_report": {
+        "name": "Last report"
+      },
+      "advertisements": {
+        "name": "Advertisements in last report"
+      },
+      "wifi_rssi": {
+        "name": "Wi-Fi signal"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "free_heap": {
+        "name": "Free memory"
+      }
+    }
+  }
+}
