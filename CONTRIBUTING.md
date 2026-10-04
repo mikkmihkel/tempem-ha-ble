@@ -30,12 +30,13 @@ keeps accepting the previous version for at least one minor release.
 1. Move the entries under `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md) to a new `## [X.Y.Z] - YYYY-MM-DD` section
    and update the compare links at the bottom.
 2. Set `"version": "X.Y.Z"` in `custom_components/tempem_ble/manifest.json`.
-3. Commit: `chore(release): vX.Y.Z`.
-4. Tag and push: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin main vX.Y.Z`.
+3. Commit both as `chore(release): vX.Y.Z` (normally in a release PR) and merge to `main`.
 
-The **Release** workflow then checks that the tag, `manifest.json` and `CHANGELOG.md` agree. It builds
-`tempem_ble.zip` (the file HACS installs, see `hacs.json`) and publishes a GitHub release with the changelog section
-as its notes. HACS offers the new version to users automatically.
+The **Release** workflow sees a `manifest.json` version on `main` that has no tag yet. It checks that `CHANGELOG.md` has
+a section for it, creates the `vX.Y.Z` tag and a GitHub release whose notes are that section, and attaches
+`tempem_ble.zip` (the file HACS installs, see `hacs.json`). HACS then offers the new version to users. Pushing a
+`vX.Y.Z` tag by hand also works, and the tag must then match `manifest.json`. Re-running the workflow for a version that
+is already tagged does nothing.
 
 ## Local checks
 

@@ -28,8 +28,8 @@ cd esphome && cp secrets.yaml.example secrets.yaml && esphome config tempem-remo
 
 ## Rules
 
-* Conventional Commits, SemVer, Keep a Changelog. Release steps are in `CONTRIBUTING.md`. `manifest.json` `version`, the
-  git tag and `CHANGELOG.md` must agree (the release workflow checks this).
+* Conventional Commits, SemVer, Keep a Changelog. Release steps are in `CONTRIBUTING.md`. Bumping `manifest.json` `version` on
+  `main` (with a matching `CHANGELOG.md` section) makes the release workflow tag and publish it.
 * Integration and firmware must keep speaking the same webhook protocol. A change to one side needs the doc and the
   other side updated in the same PR.
 * The webhook is internet-facing: validate everything, keep the limits, and never log the webhook id.
