@@ -1,0 +1,19 @@
+{
+  "domain": "tempem_ble",
+  "name": "Tempem BLE",
+  "bluetooth": [
+    {
+      "connectable": false,
+      "manufacturer_id": 89
+    }
+  ],
+  "codeowners": ["@mikkmihkel"],
+  "config_flow": true,
+  "dependencies": ["bluetooth_adapters", "webhook"],
+  "documentation": "https://github.com/mikkmihkel/tempem-ha-ble",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/mikkmihkel/tempem-ha-ble/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
