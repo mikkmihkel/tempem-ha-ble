@@ -59,7 +59,8 @@ First release.
 - Webhook protocol v1 documentation (`docs/webhook-protocol.md`).
 - CI: hassfest, HACS validation, ruff, pytest, ESPHome config validation, forwarder host tests.
   The test suite was run against Home Assistant 2025.3.0 through 2026.2.3.
-- Tag-driven release workflow that checks the tag, `manifest.json` and this changelog agree.
+- Release workflow: a version bump on `main` (or a pushed `vX.Y.Z` tag) creates the tag and a GitHub release with
+  `tempem_ble.zip` and the changelog section as notes, after checking that `manifest.json` and this changelog agree.
 - MIT license.
 
 [Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.1.0...HEAD
