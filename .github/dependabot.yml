@@ -6,12 +6,22 @@ updates:
       interval: monthly
     commit-message:
       prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Test dependencies. Everything except ruff is pinned to exactly what the
+  # tested Home Assistant release pins (see requirements_test.txt), so those
+  # are only updated together, by hand, when moving to a new Home Assistant.
   - package-ecosystem: pip
     directory: /
     schedule:
       interval: monthly
     commit-message:
       prefix: chore
+    allow:
+      - dependency-name: ruff
+
   - package-ecosystem: pip
     directory: /esphome
     schedule:
