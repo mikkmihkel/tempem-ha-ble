@@ -10,21 +10,34 @@
 # endpoint (e.g. a Cloudflare Tunnel): nothing has to connect *to* this device,
 # so there is no `api:` (native API) here. No per-sensor configuration either:
 # every valid Tempem beacon in range is forwarded, battery levels are polled
-# over GATT for every beacon that has been heard (up to max_targets), and Home Assistant
-# auto-discovers the sensors.
+# over GATT for every beacon that has been heard (up to max_targets), and Home
+# Assistant auto-discovers the sensors.
 #
-# Setup: see README.md next to this file.
-#   1. cp secrets.yaml.example secrets.yaml  and fill in tempem_webhook_url etc.
-#   2. esphome run tempem-remote-gateway.yaml   (USB, at home)
-#   3. On site: power it up, join the "${ap_ssid}" Wi-Fi from a phone and pick
-#      the site Wi-Fi in the captive portal (or use https://web.esphome.io over
-#      USB -> "Connect" -> Wi-Fi via Improv).
+# This is ONE generic firmware: nothing site-specific is compiled in, which is
+# what makes the prebuilt, browser-flashable release possible (see README.md):
+#   * Wi-Fi is entered after flashing (browser installer / Improv, or the
+#     "${ap_ssid}" hotspot + captive portal). Because no network is compiled
+#     in, ESPHome keeps the credentials across firmware updates.
+#   * The webhook URL is pasted into the device's web page (http://<ip>/) and
+#     stored in flash, also kept across updates.
+#   * Updates: the gateway checks the latest GitHub release twice a day and
+#     installs it by itself ("Auto-update" switch, on by default). A release
+#     that does not boot is rolled back automatically.
 # =============================================================================
 
 substitutions:
   name: tempem-remote
   friendly_name: Tempem Remote Gateway
-  # Fallback hotspot shown when the configured Wi-Fi cannot be reached.
+  # Firmware version; CI builds pass the release version (-s fw_version X.Y.Z).
+  fw_version: dev
+  # Optional build-time default for the webhook URL (self-built firmware only):
+  #   esphome -s webhook_url https://ha.example.com/api/webhook/<id> run ...
+  # Setting the URL in the web page overrides it.
+  webhook_url: ""
+  # Where firmware updates come from (a manifest written by the release
+  # workflow). Point it at your fork if you publish your own releases.
+  update_manifest_url: https://github.com/mikkmihkel/tempem-ha-ble/releases/latest/download/tempem-remote-gateway.manifest.json
+  # Setup hotspot, open while no Wi-Fi is configured or reachable.
   ap_ssid: Tempem-Remote-Setup
   # How often the batch is posted to Home Assistant (also the heartbeat).
   post_interval: 60s
@@ -35,13 +48,19 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  # Set to true when flashing several gateways from this file; Home Assistant
-  # tells gateways apart by their MAC address either way.
-  name_add_mac_suffix: false
+  # Every board gets its own hostname (tempem-remote-xxxxxx), so several
+  # gateways can share a network. Home Assistant tells them apart by MAC.
+  name_add_mac_suffix: true
   min_version: 2026.9.0
   project:
     name: mikkmihkel.tempem-remote-gateway
-    version: "1.0.0"
+    version: ${fw_version}
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: id(webhook_url_text).publish_state(mask_webhook_url(id(webhook_url)));
+  includes:
+    - webhook_url.h
 
 esp32:
   board: esp32-c6-devkitc-1
@@ -60,71 +79,143 @@ external_components:
   # - source: github://mikkmihkel/tempem-ha-ble@main
   #   components: [tempem_battery_poller, tempem_forwarder]
   #   refresh: 1d
-  # Explicit form:
-  # - source:
-  #     type: git
-  #     url: https://github.com/mikkmihkel/tempem-ha-ble
-  #     ref: main
-  #     path: esphome/components
-  #   components: [tempem_battery_poller, tempem_forwarder]
 
 logger:
   level: ${log_level}
+  logs:
+    # http_request logs the full URL of every request that ends in an HTTP
+    # error status, i.e. the secret webhook id, and the open web page shows
+    # the log. The forwarder logs the outcome of each post itself.
+    http_request: NONE
 
 # -----------------------------------------------------------------------------
 # Network / on-site provisioning
 # -----------------------------------------------------------------------------
 wifi:
-  # May stay placeholders: on site the credentials are entered through the
-  # captive portal or Improv and stored in flash. They survive reboots, but
-  # not an update built from a changed config or another ESPHome version
-  # (see README), so fill in the real site Wi-Fi before building updates.
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  # If no configured network can be joined for `ap_timeout`, open a hotspot
-  # with a captive portal to choose the site Wi-Fi. While the hotspot is up
-  # the device does not reboot itself.
+  # No networks on purpose: they are entered after flashing and then kept in
+  # flash across firmware updates (ESPHome only does that when the firmware
+  # has no network of its own). If the saved network can't be joined for
+  # `ap_timeout`, the setup hotspot opens with a captive portal to pick
+  # another one; the device never reboots itself while it is up.
   ap:
     ssid: ${ap_ssid}
-    password: !secret ap_password
     ap_timeout: 1min
+  # Look for a firmware update soon after (re)connecting, not only every 12 h.
+  on_connect:
+    - delay: 30s
+    - component.update: fw_update
 
 captive_portal:
 
-# Wi-Fi setup over USB from https://web.esphome.io (Improv serial).
+# Wi-Fi setup over USB, used by the browser installer right after flashing
+# (and by https://web.esphome.io). "Visit device" then opens the web page.
 improv_serial:
+  next_url: http://{{ip_address}}/
 
-# Local web UI (http://<device-ip>/ or http://${name}.local/) for on-site
-# troubleshooting: live logs, last webhook result, buttons. Protected because
-# the logs can contain the webhook URL. Remove the whole block to save flash
-# and RAM.
+# Local web page (http://<device-ip>/ or http://tempem-remote-xxxxxx.local/):
+# set the webhook URL, see the last webhook result, logs, buttons, and upload
+# a firmware file. Open to anyone on the site's network (a prebuilt firmware
+# has no per-device password); the webhook URL itself is never shown.
 web_server:
   port: 80
   version: 3
-  auth:
-    type: digest
-    username: admin
-    password: !secret web_password
+
+# A firmware counts as good (cancelling the OTA rollback) only after running
+# for 5 minutes: long enough to have posted to Home Assistant and started the
+# first battery poll (2 minutes after boot). A release that crashes earlier
+# is rolled back to the previous one.
+safe_mode:
+  boot_is_good_after: 5min
 
 ota:
+  # From `esphome run`/`esphome upload` on the same network.
   - platform: esphome
-    password: !secret ota_password
-  # Optional: remote updates pulled over HTTPS, e.g. from a firmware.bin you
-  # publish somewhere (needs an action/button that calls ota.http_request.flash):
-  # - platform: http_request
+  # Upload a .ota.bin from the web page.
+  - platform: web_server
+  # Pulled from GitHub releases by the update entity below.
+  - platform: http_request
+    id: ota_http
+    # A failed download may be retried by the auto-update (see below).
+    on_error:
+      - globals.set:
+          id: fw_update_tried
+          value: '""'
 
 # -----------------------------------------------------------------------------
-# HTTPS client used for the webhook
+# HTTPS client (webhook posts and firmware updates)
 # -----------------------------------------------------------------------------
 http_request:
   # Server certificate is verified against the ESP-IDF CA bundle (covers
-  # Cloudflare / Let's Encrypt / Google Trust Services).
+  # Cloudflare / Let's Encrypt / Google Trust Services / GitHub).
   verify_ssl: true
   timeout: 10s
-  # A redirect (e.g. Cloudflare Access login page) must show up as an error
-  # instead of being followed as a GET.
-  follow_redirects: false
-  useragent: tempem-remote-gateway/1.0 ESPHome
+  # GitHub release downloads redirect to a CDN. A redirect of the webhook to
+  # a login page (Cloudflare Access) is still caught: the page has no
+  # "ok": true in it.
+  follow_redirects: true
+  # The request line must fit in this buffer, and GitHub's redirect to the
+  # release file (release-assets.githubusercontent.com) is ~1 KB long. With
+  # the 512 B default every manifest and firmware download fails.
+  buffer_size_tx: 2048
+  useragent: tempem-remote-gateway/${fw_version} ESPHome
+
+# -----------------------------------------------------------------------------
+# Settings kept in flash
+# -----------------------------------------------------------------------------
+globals:
+  - id: webhook_url
+    type: std::string
+    restore_value: true
+    max_restore_data_length: 254
+    initial_value: '"${webhook_url}"'
+  # Release version the auto-update last installed. If the gateway still runs
+  # another version afterwards, that release was rolled back, and it is not
+  # installed automatically again (which would loop download/crash/rollback).
+  - id: fw_update_tried
+    type: std::string
+    restore_value: true
+    max_restore_data_length: 64
+    initial_value: '""'
+
+text:
+  - platform: template
+    id: webhook_url_text
+    name: Webhook URL
+    icon: mdi:webhook
+    entity_category: config
+    mode: text
+    max_length: 254
+    # Shows only the host and the last 4 characters of the id once set.
+    set_action:
+      - lambda: |-
+          std::string url = x;
+          if (!url.empty() && !is_valid_webhook_url(url)) {
+            ESP_LOGW("webhook_url", "Rejected: expected https://<your-domain>/api/webhook/<id>");
+            id(webhook_url_text).publish_state(mask_webhook_url(id(webhook_url)));
+            return;
+          }
+          id(webhook_url) = url;
+          ESP_LOGI("webhook_url", "Webhook URL %s", url.empty() ? "cleared" : "saved");
+          id(webhook_url_text).publish_state(mask_webhook_url(url));
+      - script.execute: post_to_home_assistant
+
+switch:
+  - platform: template
+    id: auto_update
+    name: Auto-update
+    icon: mdi:update
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+update:
+  - platform: http_request
+    id: fw_update
+    name: Firmware
+    source: ${update_manifest_url}
+    update_interval: 12h
+    on_update_available:
+      - script.execute: auto_install_update
 
 # -----------------------------------------------------------------------------
 # BLE
@@ -170,19 +261,50 @@ tempem_forwarder:
     name: Battery readings pending
 
 # -----------------------------------------------------------------------------
-# Posting to Home Assistant
+# Scripts: installing updates, posting to Home Assistant
 # -----------------------------------------------------------------------------
 script:
+  # Installs the release found by fw_update when Auto-update is on.
+  - id: auto_install_update
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(auto_update).state || id(fw_update).state != update::UPDATE_STATE_AVAILABLE)
+                return false;
+              const std::string &latest = id(fw_update).update_info.latest_version;
+              if (std::string("${fw_version}") == "dev") {
+                ESP_LOGW("fw_update", "Self-built firmware (version dev): not installing %s automatically",
+                         latest.c_str());
+                return false;
+              }
+              if (latest == id(fw_update_tried)) {
+                ESP_LOGW("fw_update", "%s was installed before but did not start (rolled back); not installing "
+                         "it automatically again", latest.c_str());
+                return false;
+              }
+              id(fw_update_tried) = latest;
+              return true;
+          then:
+            - logger.log: "New firmware released - installing"
+            - update.perform: fw_update
+
   - id: post_to_home_assistant
     mode: single
     then:
       - if:
           # Skips the tick when Wi-Fi is down (and never overlaps posts).
           condition:
-            lambda: return id(fwd).ready_to_post();
+            lambda: |-
+              if (id(webhook_url).empty()) {
+                ESP_LOGW("webhook_url", "No webhook URL yet - set it on the web page http://<this device's IP>/");
+                return false;
+              }
+              return id(fwd).ready_to_post();
           then:
             - http_request.post:
-                url: !secret tempem_webhook_url
+                url: !lambda return id(webhook_url);
                 request_headers:
                   Content-Type: application/json
                 body: !lambda return id(fwd).build_payload();
@@ -199,6 +321,11 @@ script:
                     - lambda: id(fwd).on_post_error();
 
 interval:
+  # Retries an update whose download failed (the update entity only reports
+  # a new release once per boot).
+  - interval: 6h
+    then:
+      - script.execute: auto_install_update
   # Posts every interval even when nothing changed (heartbeat), so Home
   # Assistant can tell the gateway is alive.
   - interval: ${post_interval}
@@ -219,8 +346,17 @@ button:
     entity_category: config
     on_press:
       - lambda: id(battery_poller).trigger_now();
+  - platform: template
+    name: Check for firmware update
+    entity_category: config
+    on_press:
+      - component.update: fw_update
   - platform: restart
     name: Restart
+    entity_category: config
+  # Forgets Wi-Fi and the webhook URL (e.g. before moving to another site).
+  - platform: factory_reset
+    name: Factory reset
     entity_category: config
 
 sensor:
@@ -234,6 +370,11 @@ sensor:
     update_interval: 60s
 
 text_sensor:
+  - platform: template
+    name: Firmware version
+    entity_category: diagnostic
+    lambda: return {"${fw_version}"};
+    update_interval: never
   - platform: version
     name: ESPHome version
     hide_timestamp: true
