@@ -1,6 +1,9 @@
+<img src="custom_components/tempem_ble/brand/icon.png" alt="" width="64" align="right">
+
 # Tempem BLE for Home Assistant
 
-Support for **Dusun / Tempem BLE temperature and humidity beacons** in Home Assistant, in two setups:
+Support for **Tempem ST1** Bluetooth temperature and humidity sensors (Dusun beacon format) in Home Assistant, in two
+setups:
 
 | | Setup | Hardware you need | How sensors are added |
 |---|---|---|---|
@@ -82,6 +85,9 @@ extract it into `<config>/custom_components/tempem_ble/` (so that `manifest.json
 4. **Battery polling (optional).** Each sensor's **Configure** sets how often to read the battery (hours; `0` = never).
    The default is 168 h (weekly). The last read time is remembered across restarts, so restarting HA does not trigger
    a round of connections. If a read fails it is retried after an hour.
+
+Each sensor shows up as an **ST1 by Tempem** device with the Tempem icon. The icon needs Home Assistant 2026.3 or newer,
+which loads it from the integration itself; older versions show a placeholder.
 
 Entities are named after the last 4 hex digits of the MAC, e.g. `C0:FF:EE:00:12:34` → **Tempem 1234**
 (`sensor.tempem_1234_temperature`, `sensor.tempem_1234_humidity`, `sensor.tempem_1234_battery`).
