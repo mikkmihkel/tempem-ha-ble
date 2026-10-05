@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-05
+
+### Changed
+- Tested against Home Assistant 2026.9.4 (Python 3.14), together with the Bluetooth libraries it pins (bleak 3.0.2,
+  bluetooth-adapters 2.4.0, bluetooth-auto-recovery 1.6.4, dbus-fast 5.0.22, habluetooth 6.26.11). The suite still
+  passes on 2025.3.0 and 2026.2.3, and the integration code needed no changes.
+- Tests no longer use device-registry lookups that Home Assistant 2026.9 deprecates.
+- CI: `actions/checkout` v7, `actions/setup-python` v7, ruff 0.16. Dependabot groups action updates and leaves the
+  Home Assistant–pinned test libraries alone.
+- Releases can be published under the maintainer's account (`RELEASE_TOKEN` secret, see CONTRIBUTING.md).
+- The firmware is unchanged apart from its version number.
+
 ## [0.2.0] - 2026-10-05
 
 ### Added
@@ -96,6 +108,7 @@ First release.
   `tempem_ble.zip` and the changelog section as notes, after checking that `manifest.json` and this changelog agree.
 - MIT license.
 
-[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/54c4ae430bf4...v0.2.0
+[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/mikkmihkel/tempem-ha-ble/compare/854cc7cdf8d8...v0.2.1
+[0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/54c4ae430bf4...854cc7cdf8d8
 [0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/tree/54c4ae430bf4
