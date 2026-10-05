@@ -21,14 +21,14 @@
       },
       "gateway": {
         "title": "Remote gateway",
-        "description": "A remote gateway is an ESP32 running the Tempem ESPHome firmware at a site that cannot reach Home Assistant's local network. It posts the beacons it hears to a webhook on your public Home Assistant URL (e.g. through a Cloudflare Tunnel).",
+        "description": "A remote gateway is an ESP32-C6 running the Tempem gateway firmware (installable from the browser, see the integration's documentation) at a site that cannot reach Home Assistant's local network. It posts the beacons it hears to a webhook on your public Home Assistant URL (e.g. through a Cloudflare Tunnel).",
         "data": {
           "name": "Name"
         }
       },
       "gateway_url": {
         "title": "Webhook URL",
-        "description": "Put this URL into the gateway's `secrets.yaml` as `tempem_webhook_url` and flash it:\n\n`{webhook_url}`\n\nTreat it like a password: anyone who knows it can post readings. You can see it again later under this entry's **Configure** button. If the URL does not start with your public domain, set **Settings → System → Network → Home Assistant URL → Internet**."
+        "description": "Paste this URL into **Webhook URL** on the gateway's web page (the browser installer's **Visit device** button opens it):\n\n`{webhook_url}`\n\nTreat it like a password: anyone who knows it can post readings. You can see it again later under this entry's **Configure** button. If the URL does not start with your public domain, set **Settings → System → Network → Home Assistant URL → Internet**."
       }
     },
     "abort": {
@@ -49,7 +49,7 @@
       },
       "gateway": {
         "title": "Remote gateway",
-        "description": "Webhook URL for this gateway (put it in the gateway's `secrets.yaml` as `tempem_webhook_url`):\n\n`{webhook_url}`"
+        "description": "Webhook URL for this gateway (paste it into **Webhook URL** on the gateway's web page):\n\n`{webhook_url}`"
       }
     }
   },
