@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-05
+
+### Added
+- Sensors heard through a remote gateway are listed under that gateway's **Connected devices**, so each remote
+  site's sensors are grouped on the gateway's device page. Hearing a sensor through a local adapter or proxy doesn't
+  change the link.
+
+### Changed
+- Sensor devices are shown as **Tempem temperature/humidity sensor** by **Tempem**, with ST1 as the model ID.
+
 ## [0.3.0] - 2026-10-05
 
 ### Added
@@ -125,7 +135,8 @@ First release.
   `tempem_ble.zip` and the changelog section as notes, after checking that `manifest.json` and this changelog agree.
 - MIT license.
 
-[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/mikkmihkel/tempem-ha-ble/compare/854cc7cdf8d8...v0.2.1
 [0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/54c4ae430bf4...854cc7cdf8d8
