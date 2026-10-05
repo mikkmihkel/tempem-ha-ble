@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tempem Gateway Installer</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-22%200%20108.32%20109.73%22%3E%3Cstyle%3Epath%7Bfill%3A%23231f20%7D%40media%28prefers-color-scheme%3Adark%29%7Bpath%7Bfill%3A%23f5f5f5%7D%7D%3C/style%3E%3Cpath%20d%3D%22M62.49%2C32.41a13.16%2C13.16%2C0%2C0%2C0-4.89-4.68%2C13.95%2C13.95%2C0%2C0%2C0-13.42%2C0%2C13.16%2C13.16%2C0%2C0%2C0-3.72%2C3.06H31.59V0L12.33%2C11.57V30.79H0V46.55H12.33V83.64c0%2C8.43%2C2.35%2C15%2C7%2C19.4s11.25%2C6.69%2C19.66%2C6.69a34.82%2C34.82%2C0%2C0%2C0%2C9.56-1.3A22%2C22%2C0%2C0%2C0%2C55.7%2C105l.15-.11V90.16H51l-.63.49a14.62%2C14.62%2C0%2C0%2C1-9.27%2C2.9C38%2C93.55%2C35.61%2C92.68%2C34%2C91s-2.43-4.34-2.43-7.74V46.55H40a13.14%2C13.14%2C0%2C0%2C0%2C4.16%2C3.63%2C14%2C14%2C0%2C0%2C0%2C13.42%2C0%2C13.31%2C13.31%2C0%2C0%2C0%2C4.89-4.68%2C12.64%2C12.64%2C0%2C0%2C0%2C0-13.1ZM50.92%2C44.21A5.26%2C5.26%2C0%2C1%2C1%2C56.18%2C39%2C5.25%2C5.25%2C0%2C0%2C1%2C50.92%2C44.21Z%22/%3E%3C/svg%3E">
   <meta name="description" content="Install the Tempem remote gateway firmware on an ESP32-C6 from the browser.">
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
@@ -44,7 +45,9 @@
       font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
     main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
-    h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 4px; }
+    h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 4px; display: flex; align-items: center; gap: 12px; }
+    h1 svg { height: 1.4em; width: auto; flex: none; }
+    h1 svg path { fill: var(--text); }
     h2 { font-size: 1.15rem; margin: 32px 0 8px; }
     .version { color: var(--muted); margin: 0 0 24px; }
     .card {
@@ -82,7 +85,7 @@
 </head>
 <body>
 <main>
-  <h1>Tempem remote gateway</h1>
+  <h1><svg viewBox="0 0 64.32 109.73" aria-hidden="true"><path d="M62.49,32.41a13.16,13.16,0,0,0-4.89-4.68,13.95,13.95,0,0,0-13.42,0,13.16,13.16,0,0,0-3.72,3.06H31.59V0L12.33,11.57V30.79H0V46.55H12.33V83.64c0,8.43,2.35,15,7,19.4s11.25,6.69,19.66,6.69a34.82,34.82,0,0,0,9.56-1.3A22,22,0,0,0,55.7,105l.15-.11V90.16H51l-.63.49a14.62,14.62,0,0,1-9.27,2.9C38,93.55,35.61,92.68,34,91s-2.43-4.34-2.43-7.74V46.55H40a13.14,13.14,0,0,0,4.16,3.63,14,14,0,0,0,13.42,0,13.31,13.31,0,0,0,4.89-4.68,12.64,12.64,0,0,0,0-13.1ZM50.92,44.21A5.26,5.26,0,1,1,56.18,39,5.25,5.25,0,0,1,50.92,44.21Z"/></svg>Tempem remote gateway</h1>
   <p class="version">Firmware {{VERSION}} for ESP32-C6 boards (e.g. DFRobot FireBeetle 2 ESP32-C6). <a href="{{RELEASE_URL}}">Release notes</a></p>
 
   <div class="card install">

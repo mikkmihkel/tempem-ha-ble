@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import struct
 
 from custom_components.tempem_ble.binary_sensor import TempemGatewayConnectivity
 from custom_components.tempem_ble.sensor import GATEWAY_SENSORS
@@ -71,3 +72,21 @@ def test_translation_keys_exist() -> None:
         assert description.translation_key in sensors, description.key
     assert "connectivity" in strings["entity"]["binary_sensor"]
     assert TempemGatewayConnectivity  # translation key "connectivity"
+
+
+def test_brand_images() -> None:
+    """Brand images Home Assistant (2026.3+) serves from the integration folder."""
+    brand = COMPONENT / "brand"
+    expected = {
+        "icon.png": 256,
+        "icon@2x.png": 512,
+        "dark_icon.png": 256,
+        "dark_icon@2x.png": 512,
+    }
+    for name, size in expected.items():
+        data = (brand / name).read_bytes()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n", name
+        width, height = struct.unpack(">II", data[16:24])
+        assert (width, height) == (size, size), name
+        # Colour type 6 = RGBA (transparent background).
+        assert data[25] == 6, name
