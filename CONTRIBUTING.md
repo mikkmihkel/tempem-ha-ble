@@ -46,6 +46,7 @@ pip install -r requirements_test.txt
 ruff check custom_components tests && ruff format --check custom_components tests
 pytest
 # firmware
-pip install esphome
-cd esphome && cp secrets.yaml.example secrets.yaml && esphome config tempem-remote-gateway.yaml
+pip install -r esphome/requirements.txt
+esphome config esphome/tempem-remote-gateway.yaml
+esphome compile esphome/tempem-remote-gateway.yaml   # full build, as CI does
 ```

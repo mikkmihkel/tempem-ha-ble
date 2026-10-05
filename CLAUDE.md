@@ -12,7 +12,8 @@ share the webhook protocol in `docs/webhook-protocol.md`:
   * `coordinator.py`: an `ActiveBluetoothProcessorCoordinator` per beacon (adverts plus a weekly GATT battery read).
   * `gateway.py`: webhook → `BaseHaRemoteScanner` for remote ESP32 gateways.
   * `storage.py`: persisted battery poll times and remote levels.
-* `esphome/`: ESP32-C6 (ESP-IDF) remote gateway firmware.
+* `esphome/`: ESP32-C6 (ESP-IDF) remote gateway firmware. One generic build (no Wi-Fi or webhook URL compiled in), released
+  with the integration, installed from the browser (`esphome/install/`) and self-updating from GitHub releases.
   * `tempem_forwarder`: batches adverts and batteries and builds the JSON. Its logic is in the host-testable `forwarder_core.h`.
   * `tempem_battery_poller`: GATT battery state machine.
 
@@ -23,7 +24,7 @@ pip install -r requirements_test.txt        # python 3.13
 pytest -q
 ruff check custom_components tests && ruff format --check custom_components tests
 bash esphome/tests/host/run_host_tests.sh   # forwarder JSON/ack logic (g++)
-cd esphome && cp secrets.yaml.example secrets.yaml && esphome config tempem-remote-gateway.yaml
+pip install -r esphome/requirements.txt && esphome config esphome/tempem-remote-gateway.yaml
 ```
 
 ## Rules
@@ -36,4 +37,6 @@ cd esphome && cp secrets.yaml.example secrets.yaml && esphome config tempem-remo
 * Company id `0x0059` is Nordic's. Never treat every `0x0059` device as a Tempem beacon: use
   `parser.is_supported_advertisement` (HA) or `is_likely_tempem` (firmware).
 * Supported Home Assistant: 2025.3.0+ (`hacs.json`). Don't use newer APIs without raising that.
+* Never compile site-specific settings (Wi-Fi networks, webhook URL) into the released firmware: Wi-Fi compiled in
+  makes ESPHome forget runtime-entered credentials on every update.
 * `secrets.yaml` is never committed.

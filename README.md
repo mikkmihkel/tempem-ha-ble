@@ -143,24 +143,27 @@ then rename the new ones to the old entity IDs.
 2. **Cloudflare.** If the hostname is protected by **Cloudflare Access / Zero Trust**, add an application or policy for path
    `/api/webhook/*` with action **Bypass**. The ESP32 can't do the Access login. If you enabled **Bot Fight Mode** or custom WAF
    rules, add a skip rule for that path too. Without Access, nothing needs changing.
-3. **Flash the ESP32-C6 at home** (see [`esphome/README.md`](esphome/README.md)):
-   ```bash
-   cd esphome
-   cp secrets.yaml.example secrets.yaml   # paste the webhook URL; Wi-Fi can stay a placeholder
-   esphome run tempem-remote-gateway.yaml
-   ```
-4. **At the remote site:** power it on. If it can't join a known Wi-Fi network, it opens an access point
-   **Tempem-Remote-Setup** (password: `ap_password` from `secrets.yaml`). Connect with your phone, and the captive
-   portal lets you pick the site's Wi-Fi and enter its password.
-   > ESPHome forgets Wi-Fi credentials entered this way when you flash firmware built from a changed config or a newer
-   > ESPHome. Once you know the site's Wi-Fi, put it in `secrets.yaml` so later updates keep working.
+3. **Install the firmware from the browser** (Chrome or Edge, USB data cable, nothing else to install):
+   open the **[installer page](https://mikkmihkel.github.io/tempem-ha-ble/)**, plug in the ESP32-C6, click **Install**.
+   When it's done, enter the site's **Wi-Fi** in the same dialog (or later, see step 4). Then click **Visit device**
+   and paste the webhook URL into **Webhook URL**. Details and the no-installer route (web.esphome.io + the release
+   `.bin`) are in [`esphome/README.md`](esphome/README.md).
+4. **At the remote site:** power it on. If it can't join a Wi-Fi network, it opens the hotspot **Tempem-Remote-Setup**
+   after a minute. Join it with your phone, and the captive portal lets you pick the site's Wi-Fi.
+   Wi-Fi and webhook URL are kept across firmware updates.
 5. **In HA:** within a minute the gateway's **Connectivity** turns on and the beacons near it appear under **Discovered**.
    Add them like local ones. Battery levels arrive after the gateway's first battery round, a few minutes after boot.
 
 The gateway's device in HA shows *Connectivity*, *Last report*, *Advertisements in last report* and *Wi-Fi signal*
 (plus disabled-by-default *Uptime* and *Free memory*). It also appears in the Bluetooth integration as a remote scanner.
 
-The webhook protocol is documented in [`docs/webhook-protocol.md`](docs/webhook-protocol.md) so other devices can use it too.
+**Updates** install themselves: the gateway checks GitHub for a new release every 12 hours and after connecting to
+Wi-Fi. It installs the release and rolls back if the new version doesn't start. You can turn this off with the
+*Auto-update* switch on its web page; it can also be updated from that page or over USB with the installer
+([details](esphome/README.md#4-updating)). Integration and firmware are released together under one version.
+
+The webhook protocol is documented in [`docs/webhook-protocol.md`](docs/webhook-protocol.md), in case you want to
+write your own gateway.
 
 ---
 
