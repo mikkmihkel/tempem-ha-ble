@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tempem Gateway Installer</title>
+  <meta name="description" content="Install the Tempem remote gateway firmware on an ESP32-C6 from the browser.">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --card: #ffffff;
+      --text: #1d1d1b;
+      --muted: #5f5f5a;
+      --border: #e2e2dd;
+      --accent: #0b6e4f;
+      --accent-text: #ffffff;
+      --code: #efefea;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #151514;
+        --card: #1e1e1c;
+        --text: #ecece8;
+        --muted: #a5a59e;
+        --border: #34342f;
+        --accent: #3fbf8f;
+        --accent-text: #0d1f18;
+        --code: #2a2a26;
+        color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #151514; --card: #1e1e1c; --text: #ecece8; --muted: #a5a59e;
+      --border: #34342f; --accent: #3fbf8f; --accent-text: #0d1f18; --code: #2a2a26;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
+    h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 4px; }
+    h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+    .version { color: var(--muted); margin: 0 0 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .install { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+    .install p { margin: 0; flex: 1 1 240px; color: var(--muted); }
+    button.primary {
+      font: inherit;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--accent-text);
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 22px;
+      cursor: pointer;
+    }
+    button.primary:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+    .warn { color: var(--text); }
+    ol { padding-left: 1.3em; margin: 8px 0 0; }
+    li { margin: 6px 0; }
+    code {
+      background: var(--code);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.92em;
+      overflow-wrap: anywhere;
+    }
+    a { color: var(--accent); }
+    footer { margin-top: 40px; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Tempem remote gateway</h1>
+  <p class="version">Firmware {{VERSION}} for ESP32-C6 boards (e.g. DFRobot FireBeetle 2 ESP32-C6). <a href="{{RELEASE_URL}}">Release notes</a></p>
+
+  <div class="card install">
+    <esp-web-install-button manifest="firmware/manifest.json">
+      <button slot="activate" class="primary">Install</button>
+      <span slot="unsupported" class="warn">This browser can't talk to USB devices. Open this page in <strong>Chrome</strong> or <strong>Edge</strong> on a computer.</span>
+      <span slot="not-allowed" class="warn">The installer only works on an <code>https://</code> page.</span>
+    </esp-web-install-button>
+    <p>Connect the board with a USB data cable, click <strong>Install</strong> and pick its serial port.</p>
+  </div>
+
+  <h2>First install</h2>
+  <ol>
+    <li>Click <strong>Install</strong>, choose the board's port (<code>USB JTAG/serial debug unit</code> on ESP32-C6), then <strong>Install Tempem remote gateway</strong>. On a board that ran other firmware before, tick <strong>Erase device</strong>.</li>
+    <li>When it's done, the installer asks for <strong>Wi-Fi</strong>. Pick the network of the site where the gateway will run. You can also skip this and set the Wi-Fi on site: the gateway then opens the hotspot <code>Tempem-Remote-Setup</code>, and joining it with a phone shows a page to choose the network.</li>
+    <li>Click <strong>Visit device</strong> (or open <code>http://&lt;its IP&gt;/</code>). Paste the <strong>Webhook URL</strong> from Home Assistant into the field of the same name and press Enter.<br>
+      In Home Assistant: <em>Settings → Devices &amp; services → Add integration → Tempem BLE → Add a remote gateway</em>.</li>
+  </ol>
+  <p>Within a minute the gateway shows as connected in Home Assistant, and the beacons around it appear under <em>Discovered</em>.</p>
+
+  <h2>Updates</h2>
+  <ol>
+    <li><strong>Automatic (default):</strong> the gateway checks for a new release twice a day and installs it itself. If a new version fails to start, it rolls back to the previous one. Turn this off with the <strong>Auto-update</strong> switch on its web page.</li>
+    <li><strong>From its web page:</strong> press <strong>Check for firmware update</strong>, or upload <code>tempem-remote-gateway.ota.bin</code> from a release in the <em>OTA Update</em> box.</li>
+    <li><strong>Over USB:</strong> click <strong>Install</strong> on this page again and leave <strong>Erase device</strong> unticked. Wi-Fi and the webhook URL are kept.</li>
+  </ol>
+
+  <h2>No Install button?</h2>
+  <p>Use a desktop Chrome or Edge, and a USB cable that carries data. If the port doesn't show up, hold <strong>BOOT</strong>, tap <strong>RST</strong>, release <strong>BOOT</strong>, and try again. Linux users may need to be in the <code>dialout</code> group.</p>
+
+  <footer>
+    <a href="https://github.com/mikkmihkel/tempem-ha-ble">mikkmihkel/tempem-ha-ble</a> · Installer powered by <a href="https://esphome.github.io/esp-web-tools/">ESP Web Tools</a>
+  </footer>
+</main>
+</body>
+</html>
