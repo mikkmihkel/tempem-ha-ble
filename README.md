@@ -86,8 +86,17 @@ extract it into `<config>/custom_components/tempem_ble/` (so that `manifest.json
    The default is 168 h (weekly). The last read time is remembered across restarts, so restarting HA does not trigger
    a round of connections. If a read fails it is retried after an hour.
 
-Each sensor shows up as an **ST1 by Tempem** device with the Tempem icon. The icon needs Home Assistant 2026.3 or newer,
-which loads it from the integration itself; older versions show a placeholder.
+Each sensor is its own device: **Tempem temperature/humidity sensor**, by **Tempem** (model ID ST1), with the Tempem
+icon. The icon needs Home Assistant 2026.3 or newer, which loads it from the integration itself; older versions show
+a placeholder.
+
+**Seeing all sensors together.** One device per physical sensor is how Home Assistant models Bluetooth sensors. That
+way each one can sit in its own area (room), has its own availability and battery, and can be renamed, disabled or
+removed on its own. To see them side by side:
+* Settings → Devices & services → **Tempem BLE** lists every sensor and gateway.
+* Assign each sensor to an **area**. The default dashboard and the area pages then group them by room.
+* For a single overview card, filter the entity list by the integration (Settings → Entities → filter "Tempem BLE")
+  and add the temperature entities to one dashboard card.
 
 Entities are named after the last 4 hex digits of the MAC, e.g. `C0:FF:EE:00:12:34` → **Tempem 1234**
 (`sensor.tempem_1234_temperature`, `sensor.tempem_1234_humidity`, `sensor.tempem_1234_battery`).
@@ -157,8 +166,11 @@ then rename the new ones to the old entity IDs.
 4. **At the remote site:** power it on. If it can't join a Wi-Fi network, it opens the hotspot **Tempem-Remote-Setup**
    after a minute. Join it with your phone, and the captive portal lets you pick the site's Wi-Fi.
    Wi-Fi and webhook URL are kept across firmware updates.
-5. **In HA:** within a minute the gateway's **Connectivity** turns on and the beacons near it appear under **Discovered**.
-   Add them like local ones. Battery levels arrive after the gateway's first battery round, a few minutes after boot.
+5. **In HA:** within a minute the gateway's **Connectivity** turns on and the beacons near it appear under **Discovered**,
+   one card per sensor, exactly like local ones. The confirmation dialog says which gateway heard the sensor
+   ("heard via Summer house (tempem-gw-…)"). Once added, a sensor is listed under its gateway's **Connected devices**, so each
+   remote site's sensors stay grouped on the gateway's device page. Battery levels arrive after the gateway's first
+   battery round, a few minutes after boot.
 
 The gateway's device in HA shows *Connectivity*, *Last report*, *Advertisements in last report* and *Wi-Fi signal*
 (plus disabled-by-default *Uptime* and *Free memory*). It also appears in the Bluetooth integration as a remote scanner.
