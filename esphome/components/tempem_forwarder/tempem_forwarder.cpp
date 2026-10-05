@@ -98,7 +98,11 @@ std::string TempemForwarder::build_payload() {
   gw.mac = get_mac_address_pretty_into_buffer(mac_buf);
   const auto &name = App.get_name();
   gw.name.assign(name.c_str(), name.size());
+#ifdef ESPHOME_PROJECT_VERSION
+  gw.version = ESPHOME_PROJECT_VERSION;
+#else
   gw.version = ESPHOME_VERSION;
+#endif
   gw.uptime_s = millis_64() / 1000ULL;
 #ifdef USE_WIFI
   if (wifi::global_wifi_component != nullptr && wifi::global_wifi_component->is_connected()) {
@@ -163,12 +167,15 @@ void TempemForwarder::finish_post_(PostOutcome outcome, int status, const std::s
     switch (outcome) {
       case PostOutcome::NOT_ACKNOWLEDGED: {
         // HA answers 200 with an empty body for webhook ids it does not know.
+        // A followed redirect to a login page (Cloudflare Access) also ends
+        // here, as a 200 HTML page.
         const std::string snippet = body.substr(0, 64);
         ESP_LOGW(TAG,
                  "HTTP %d but no \"ok\": true in response (body: '%s') - webhook id unknown to Home Assistant "
-                 "- check tempem_webhook_url",
+                 "(check the Webhook URL), or a Cloudflare Access login page (add a Bypass policy for "
+                 "/api/webhook/*)",
                  status, snippet.c_str());
-        this->publish_result_("not acknowledged: webhook id unknown to Home Assistant?");
+        this->publish_result_("not acknowledged: wrong webhook URL or Cloudflare Access?");
         break;
       }
       case PostOutcome::HTTP_ERROR: {

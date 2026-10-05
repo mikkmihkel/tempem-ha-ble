@@ -17,8 +17,8 @@ The webhook id is the only credential, so keep it secret. Only `POST` is accepte
   "v": 1,
   "gateway": {
     "mac": "AA:BB:CC:DD:EE:FF",
-    "name": "tempem-remote",
-    "version": "2026.9.1",
+    "name": "tempem-remote-ddeeff",
+    "version": "0.2.0",
     "uptime": 12345,
     "wifi_rssi": -61,
     "free_heap": 123456
