@@ -10,6 +10,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from . import (
     ADDRESS,
+    find_device,
     inject_service_info,
     make_service_info,
     register_fake_remote_scanner,
@@ -55,9 +56,7 @@ async def test_entities_from_advertisement(
     assert rssi.disabled_by is er.RegistryEntryDisabler.INTEGRATION
     assert entity_registry.async_get(TEMP).unique_id == f"{ADDRESS}-temperature"
 
-    device = device_registry.async_get_device(
-        connections={(dr.CONNECTION_BLUETOOTH, ADDRESS)}
-    )
+    device = find_device(hass, connection=(dr.CONNECTION_BLUETOOTH, ADDRESS))
     assert device is not None
     assert device.name == "Tempem 1234"
     assert device.manufacturer == "Dusun"

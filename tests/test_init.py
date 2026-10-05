@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from . import ADDRESS
+from . import ADDRESS, find_device
 from custom_components.tempem_ble.const import DOMAIN
 from custom_components.tempem_ble.coordinator import TempemCoordinator
 from custom_components.tempem_ble.gateway import TempemGateway
@@ -62,10 +62,8 @@ async def test_setup_unload_gateway(
     bt_entries = _bluetooth_scanner_entries(hass)
     assert len(bt_entries) == 1
     assert bt_entries[0].state is ConfigEntryState.LOADED
-    gateway_device = device_registry.async_get_device(identifiers={(DOMAIN, GW_ID)})
-    bt_device = device_registry.async_get_device(
-        connections={(dr.CONNECTION_BLUETOOTH, GW_ID)}
-    )
+    gateway_device = find_device(hass, identifier=(DOMAIN, GW_ID))
+    bt_device = find_device(hass, connection=(dr.CONNECTION_BLUETOOTH, GW_ID))
     assert bt_device is not None
     assert bt_device.via_device_id == gateway_device.id
 

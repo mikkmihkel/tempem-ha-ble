@@ -15,6 +15,7 @@ from homeassistant.components.bluetooth import (
     async_register_scanner,
 )
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 ADDRESS = "C0:FF:EE:00:12:34"
 OTHER_ADDRESS = "C1:22:33:44:55:66"
@@ -139,3 +140,28 @@ def contract_payload(**overrides: Any) -> dict[str, Any]:
 def now() -> float:
     """Wall clock, patchable."""
     return time.time()
+
+
+def find_device(
+    hass: HomeAssistant,
+    *,
+    identifier: tuple[str, str] | None = None,
+    connection: tuple[str, str] | None = None,
+) -> dr.DeviceEntry | None:
+    """Look a device up by identifier or connection, on every supported HA version.
+
+    DeviceRegistry.async_get_device and using DeviceRegistry.devices as a
+    mapping are deprecated (errors in tests) since Home Assistant 2026.9, and
+    their replacements need a config entry and don't exist in older releases.
+    """
+    registry = dr.async_get(hass)
+    for item in registry.devices:
+        # Newer releases iterate DeviceEntry objects, older ones device ids.
+        device = registry.async_get(item) if isinstance(item, str) else item
+        if device is None:
+            continue
+        if identifier is not None and identifier in device.identifiers:
+            return device
+        if connection is not None and connection in device.connections:
+            return device
+    return None

@@ -22,7 +22,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util.aiohttp import MockRequest
 
-from . import ADDRESS, OTHER_ADDRESS, contract_payload
+from . import ADDRESS, OTHER_ADDRESS, contract_payload, find_device
 from custom_components.tempem_ble.const import DOMAIN
 from custom_components.tempem_ble.gateway import MAX_BODY_BYTES
 from custom_components.tempem_ble.storage import POLL_STORE
@@ -148,7 +148,7 @@ async def test_gateway_sensors(
     )
     assert hass.states.get("sensor.summer_house_wi_fi_signal").state == "-61"
 
-    device = device_registry.async_get_device(identifiers={(DOMAIN, GW_ID)})
+    device = find_device(hass, identifier=(DOMAIN, GW_ID))
     assert device is not None
     assert device.sw_version == "2026.9.1"
     assert (dr.CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:ff") in device.connections
@@ -547,7 +547,12 @@ async def test_gateway_mac_used_by_other_device(
     hass_client_no_auth: ClientSessionGenerator,
     device_registry: dr.DeviceRegistry,
 ) -> None:
-    """A MAC that already belongs to another device does not break the entities."""
+    """A MAC that already belongs to another device does not break the entities.
+
+    Before Home Assistant 2026.9 a connection could belong to one device only
+    and adding it raised DeviceConnectionCollisionError; since then it may be
+    shared across config entries. Either way the report must go through.
+    """
     other_entry = MockConfigEntry(domain="esphome")
     other_entry.add_to_hass(hass)
     other = device_registry.async_get_or_create(
@@ -561,9 +566,8 @@ async def test_gateway_mac_used_by_other_device(
 
     assert hass.states.get("binary_sensor.summer_house_connectivity").state == STATE_ON
     assert hass.states.get("sensor.summer_house_wi_fi_signal").state == "-61"
-    device = device_registry.async_get_device(identifiers={(DOMAIN, GW_ID)})
+    device = find_device(hass, identifier=(DOMAIN, GW_ID))
     assert device.sw_version == "2026.9.1"
-    assert (dr.CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:ff") not in device.connections
     assert device_registry.async_get(other.id).connections == other.connections
 
 
