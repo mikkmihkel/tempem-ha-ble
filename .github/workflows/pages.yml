@@ -1,0 +1,76 @@
+name: Publish installer
+
+# Rebuilds the browser installer (GitHub Pages) from the firmware files of an
+# existing release, without building or releasing anything. The Release
+# workflow deploys the page itself; run this one to (re)publish it later,
+# e.g. right after enabling GitHub Pages.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish (empty = latest release)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    name: Publish browser installer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Download release firmware
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          mkdir -p build
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir build \
+            --pattern tempem-remote-gateway.factory.bin \
+            --pattern tempem-remote-gateway.ota.bin
+          # make_manifests.py takes an ESPHome build folder.
+          mv build/tempem-remote-gateway.factory.bin build/firmware.factory.bin
+          mv build/tempem-remote-gateway.ota.bin build/firmware.ota.bin
+
+      - name: Package
+        run: |
+          python esphome/scripts/make_manifests.py \
+            --version "${STEPS_TAG#v}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --build-dir build \
+            --site-template esphome/install \
+            --out dist
+        env:
+          STEPS_TAG: ${{ steps.release.outputs.tag }}
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          name: github-pages-${{ github.run_attempt }}
+          path: dist/site
+      - id: deploy
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}

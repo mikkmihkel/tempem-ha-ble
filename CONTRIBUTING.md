@@ -38,6 +38,9 @@ a section for it, creates the `vX.Y.Z` tag and a GitHub release whose notes are 
 `vX.Y.Z` tag by hand also works, and the tag must then match `manifest.json`. Re-running the workflow for a version that
 is already tagged does nothing.
 
+The installer page is deployed by the same workflow. If that step fails (e.g. GitHub Pages wasn't enabled yet),
+run **Actions → Publish installer → Run workflow**; it republishes the page from the latest release's firmware.
+
 ### Publishing releases under your own account
 
 By default the workflow publishes with the built-in `GITHUB_TOKEN`, so the tag and release show `github-actions` as

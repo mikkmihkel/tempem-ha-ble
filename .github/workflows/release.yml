@@ -156,7 +156,8 @@ jobs:
     needs: [firmware, publish]
     runs-on: ubuntu-latest
     # Needs GitHub Pages enabled once (Settings -> Pages -> Source: GitHub
-    # Actions). Without it the release is still complete.
+    # Actions). Without it the release is still complete, and the
+    # "Publish installer" workflow can deploy the page later.
     continue-on-error: true
     permissions:
       pages: write
@@ -169,8 +170,13 @@ jobs:
         with:
           name: firmware
           path: dist
+      # Named per attempt: re-running this job would otherwise find two
+      # "github-pages" artifacts in the run and refuse to deploy.
       - uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: dist/site
       - id: deploy
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}

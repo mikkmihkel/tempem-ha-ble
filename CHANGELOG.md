@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Re-running the release's installer job failed with "Multiple artifacts named github-pages". The Pages artifact is
+  now named per attempt.
+
+### Added
+- **Publish installer** workflow: (re)publishes the browser installer from an existing release's firmware, without
+  building or releasing anything (e.g. right after enabling GitHub Pages).
+
 ## [0.2.1] - 2026-10-05
 
 ### Changed
