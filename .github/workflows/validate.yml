@@ -52,24 +52,35 @@ jobs:
         run: pytest -q
 
   firmware:
-    name: ESPHome config
+    name: Firmware
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+      - name: Cache ESP-IDF toolchain
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/esphome
+          key: esphome-${{ hashFiles('esphome/requirements.txt') }}
       - name: Install ESPHome
-        run: pip install esphome
-      - name: Validate firmware configs
+        run: pip install -r esphome/requirements.txt
+      - name: Validate test configs
         working-directory: esphome
         run: |
-          cp secrets.yaml.example secrets.yaml
-          esphome config tempem-remote-gateway.yaml > /dev/null
           for f in tests/*.yaml; do
             echo "::group::$f"
             esphome config "$f" > /dev/null
             echo "::endgroup::"
           done
-      - name: Forwarder host tests
+      - name: Host tests
         run: bash esphome/tests/host/run_host_tests.sh
+      - name: Compile gateway firmware
+        run: esphome -s fw_version ci compile esphome/tempem-remote-gateway.yaml
+      - name: Check packaging
+        run: |
+          python esphome/scripts/make_manifests.py --version 0.0.0 --repo "$GITHUB_REPOSITORY" \
+            --build-dir esphome/.esphome/build/tempem-remote/build \
+            --site-template esphome/install --out dist
+          ls -l dist/release dist/site dist/site/firmware
