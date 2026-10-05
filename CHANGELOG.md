@@ -97,5 +97,5 @@ First release.
 - MIT license.
 
 [Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/releases/tag/v0.1.0
+[0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/54c4ae430bf4...v0.2.0
+[0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/tree/54c4ae430bf4
