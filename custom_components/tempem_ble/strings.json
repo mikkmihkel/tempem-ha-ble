@@ -35,7 +35,7 @@
       "already_configured": "This device is already configured.",
       "already_in_progress": "Configuration for this device is already in progress.",
       "no_devices_found": "No Tempem sensors are being heard right now. Make sure the Bluetooth integration is set up and the sensor is in range.",
-      "not_supported": "This device is not a Tempem/Dusun temperature beacon."
+      "not_supported": "This device is not a Tempem ST1 temperature sensor."
     }
   },
   "options": {

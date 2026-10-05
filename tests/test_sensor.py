@@ -59,7 +59,8 @@ async def test_entities_from_advertisement(
     device = find_device(hass, connection=(dr.CONNECTION_BLUETOOTH, ADDRESS))
     assert device is not None
     assert device.name == "Tempem 1234"
-    assert device.manufacturer == "Dusun"
+    assert device.manufacturer == "Tempem"
+    assert device.model == "ST1"
 
     # 0x6000 -> 19.04 C, 0x5000 -> 33.1 %
     inject_service_info(

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 DOMAIN = "tempem_ble"
-MANUFACTURER = "Dusun"
-MODEL = "Tempem temperature/humidity beacon"
+MANUFACTURER = "Tempem"
+MODEL = "ST1"
 
 # Config entry data
 CONF_ENTRY_TYPE = "entry_type"
