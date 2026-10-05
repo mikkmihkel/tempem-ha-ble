@@ -15,4 +15,4 @@ habluetooth==5.8.0
 aiousbwatcher==1.1.1
 pyserial==3.5
 
-ruff==0.15.20
+ruff==0.16.10
