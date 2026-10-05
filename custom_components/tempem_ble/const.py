@@ -4,13 +4,16 @@ from __future__ import annotations
 
 DOMAIN = "tempem_ble"
 MANUFACTURER = "Tempem"
-MODEL = "ST1"
+MODEL = "Tempem temperature/humidity sensor"
+MODEL_ID = "ST1"
 
 # Config entry data
 CONF_ENTRY_TYPE = "entry_type"
 ENTRY_TYPE_SENSOR = "sensor"
 ENTRY_TYPE_GATEWAY = "gateway"
 CONF_GATEWAY_ID = "gateway_id"
+# Remote gateway ids (and their Bluetooth scanner sources) start with this.
+GATEWAY_ID_PREFIX = "tempem-gw-"
 
 # Options
 CONF_BATTERY_POLL_HOURS = "battery_poll_hours"

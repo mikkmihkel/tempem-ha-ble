@@ -22,7 +22,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util.aiohttp import MockRequest
 
-from . import ADDRESS, OTHER_ADDRESS, contract_payload, find_device
+from . import (
+    ADDRESS,
+    OTHER_ADDRESS,
+    contract_payload,
+    find_device,
+    inject_service_info,
+    make_service_info,
+)
 from custom_components.tempem_ble.const import DOMAIN
 from custom_components.tempem_ble.gateway import MAX_BODY_BYTES
 from custom_components.tempem_ble.storage import POLL_STORE
@@ -119,6 +126,44 @@ async def test_contract_payload_updates_sensor(
     await hass.async_block_till_done()
     assert hass.states.get(TEMP).state == "19.04"
     assert hass.states.get(BATTERY).state == "87"
+
+
+async def test_remote_sensor_listed_under_gateway(
+    hass: HomeAssistant,
+    gateway_entry: MockConfigEntry,
+    sensor_entry: MockConfigEntry,
+    hass_client_no_auth: ClientSessionGenerator,
+) -> None:
+    """A sensor heard through a gateway becomes one of its connected devices."""
+    await _setup(hass, gateway_entry, sensor_entry)
+    client = await hass_client_no_auth()
+    for temp in ("036e087b34", "0360005000"):
+        payload = contract_payload()
+        payload["advertisements"][0]["manufacturer_data"] = {"89": temp}
+        await _post(client, payload)
+        await hass.async_block_till_done()
+
+    gateway_device = find_device(hass, identifier=(DOMAIN, GW_ID))
+    sensor_device = find_device(hass, connection=(dr.CONNECTION_BLUETOOTH, ADDRESS))
+    assert gateway_device is not None
+    assert sensor_device is not None
+    assert sensor_device.via_device_id == gateway_device.id
+
+
+async def test_local_sensor_not_linked_to_gateway(
+    hass: HomeAssistant, gateway_entry: MockConfigEntry, sensor_entry: MockConfigEntry
+) -> None:
+    """Sensors heard by a local adapter are not listed under a gateway."""
+    await _setup(hass, gateway_entry, sensor_entry)
+    for temp in ("036e087b34", "0360005000"):
+        inject_service_info(
+            hass,
+            make_service_info(manufacturer_data={0x0059: bytes.fromhex(temp)}),
+        )
+        await hass.async_block_till_done()
+    assert hass.states.get(TEMP).state == "19.04"
+    sensor_device = find_device(hass, connection=(dr.CONNECTION_BLUETOOTH, ADDRESS))
+    assert sensor_device.via_device_id is None
 
 
 async def test_gateway_sensors(

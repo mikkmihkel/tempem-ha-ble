@@ -31,6 +31,7 @@ from .const import (
     DOMAIN,
     ENTRY_TYPE_GATEWAY,
     ENTRY_TYPE_SENSOR,
+    GATEWAY_ID_PREFIX,
 )
 from .gateway import async_webhook_url
 from .parser import is_supported_advertisement, short_address
@@ -146,7 +147,7 @@ class TempemConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Create a remote gateway and its webhook."""
         if user_input is not None:
-            gateway_id = f"tempem-gw-{secrets.token_hex(4)}"
+            gateway_id = f"{GATEWAY_ID_PREFIX}{secrets.token_hex(4)}"
             await self.async_set_unique_id(gateway_id)
             self._gateway_title = user_input[CONF_NAME]
             self._gateway_entry_data = {

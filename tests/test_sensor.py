@@ -60,7 +60,8 @@ async def test_entities_from_advertisement(
     assert device is not None
     assert device.name == "Tempem 1234"
     assert device.manufacturer == "Tempem"
-    assert device.model == "ST1"
+    assert device.model == "Tempem temperature/humidity sensor"
+    assert device.model_id == "ST1"
 
     # 0x6000 -> 19.04 C, 0x5000 -> 33.1 %
     inject_service_info(

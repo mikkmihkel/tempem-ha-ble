@@ -33,6 +33,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
@@ -40,9 +41,13 @@ from .const import (
     BATTERY_LEVEL_CHAR_UUID,
     BATTERY_RETRY_SECONDS,
     CONF_BATTERY_POLL_HOURS,
+    CONF_GATEWAY_ID,
     DEFAULT_BATTERY_POLL_HOURS,
+    DOMAIN,
+    GATEWAY_ID_PREFIX,
     MANUFACTURER,
     MODEL,
+    MODEL_ID,
     REMOTE_BATTERY_MAX_AGE_SECONDS,
     SIGNAL_REMOTE_BATTERY,
 )
@@ -112,10 +117,13 @@ class TempemCoordinator(
         self._entry = entry
         self._poll_store = poll_store
         self._last_attempt: float | None = None
+        # Remote gateway the device is listed under, see _async_link_gateway.
+        self._linked_gateway: str | None = None
         self._device_info = DeviceInfo(
             name=entry.title,
             manufacturer=MANUFACTURER,
             model=MODEL,
+            model_id=MODEL_ID,
         )
         super().__init__(
             hass=hass,
@@ -160,6 +168,7 @@ class TempemCoordinator(
     def _async_on_advertisement(
         self, service_info: BluetoothServiceInfoBleak
     ) -> PassiveBluetoothDataUpdate:
+        self._async_link_gateway(service_info.source)
         values: dict[PassiveBluetoothEntityKey, float | int] = {
             KEY_RSSI: service_info.rssi
         }
@@ -169,6 +178,51 @@ class TempemCoordinator(
             if reading.humidity is not None:
                 values[KEY_HUMIDITY] = reading.humidity
         return self._update(values)
+
+    @callback
+    def _async_link_gateway(self, source: str) -> None:
+        """List the sensor under the remote gateway it is heard through.
+
+        Sensors at a remote site then show up as connected devices of their
+        gateway. Hearing the sensor through a local adapter or proxy leaves
+        the link alone, so it does not flap when both hear it.
+        """
+        if source == self._linked_gateway or not source.startswith(GATEWAY_ID_PREFIX):
+            return
+        gateway_entry = next(
+            (
+                entry
+                for entry in self.hass.config_entries.async_entries(DOMAIN)
+                if entry.data.get(CONF_GATEWAY_ID) == source
+            ),
+            None,
+        )
+        if gateway_entry is None:
+            return
+        registry = dr.async_get(self.hass)
+        gateway_device = next(
+            (
+                device
+                for device in dr.async_entries_for_config_entry(
+                    registry, gateway_entry.entry_id
+                )
+                if (DOMAIN, source) in device.identifiers
+            ),
+            None,
+        )
+        sensor_device = next(
+            iter(dr.async_entries_for_config_entry(registry, self._entry.entry_id)),
+            None,
+        )
+        if gateway_device is None or sensor_device is None:
+            # The sensor's device is created with its first entities; try
+            # again with the next advertisement.
+            return
+        self._linked_gateway = source
+        if sensor_device.via_device_id != gateway_device.id:
+            registry.async_update_device(
+                sensor_device.id, via_device_id=gateway_device.id
+            )
 
     @callback
     def _async_push(self, update: PassiveBluetoothDataUpdate) -> None:
