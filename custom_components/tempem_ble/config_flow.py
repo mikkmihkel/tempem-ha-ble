@@ -165,7 +165,7 @@ class TempemConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_gateway_url(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the webhook URL to put in the gateway's secrets.yaml."""
+        """Show the webhook URL to paste into the gateway's web page."""
         assert self._gateway_entry_data is not None
         assert self._gateway_title is not None
         if user_input is not None:
