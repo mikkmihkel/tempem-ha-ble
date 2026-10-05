@@ -188,7 +188,7 @@ write your own gateway.
 ## Development
 
 ```bash
-python3.13 -m venv .venv && . .venv/bin/activate
+python3.14 -m venv .venv && . .venv/bin/activate
 pip install -r requirements_test.txt
 pytest
 ruff check custom_components tests

@@ -38,10 +38,16 @@ a section for it, creates the `vX.Y.Z` tag and a GitHub release whose notes are 
 `vX.Y.Z` tag by hand also works, and the tag must then match `manifest.json`. Re-running the workflow for a version that
 is already tagged does nothing.
 
+### Publishing releases under your own account
+
+By default the workflow publishes with the built-in `GITHUB_TOKEN`, so the tag and release show `github-actions` as
+author. To publish them as the maintainer, create a fine-grained personal access token for this repository with
+**Contents: Read and write** and save it as the Actions secret `RELEASE_TOKEN`. The workflow uses it when present.
+
 ## Local checks
 
 ```bash
-python3.13 -m venv .venv && . .venv/bin/activate
+python3.14 -m venv .venv && . .venv/bin/activate
 pip install -r requirements_test.txt
 ruff check custom_components tests && ruff format --check custom_components tests
 pytest

@@ -20,7 +20,7 @@ share the webhook protocol in `docs/webhook-protocol.md`:
 ## Commands
 
 ```bash
-pip install -r requirements_test.txt        # python 3.13
+pip install -r requirements_test.txt        # python 3.14 (Home Assistant 2026.9)
 pytest -q
 ruff check custom_components tests && ruff format --check custom_components tests
 bash esphome/tests/host/run_host_tests.sh   # forwarder JSON/ack logic (g++)
@@ -39,4 +39,9 @@ pip install -r esphome/requirements.txt && esphome config esphome/tempem-remote-
 * Supported Home Assistant: 2025.3.0+ (`hacs.json`). Don't use newer APIs without raising that.
 * Never compile site-specific settings (Wi-Fi networks, webhook URL) into the released firmware: Wi-Fi compiled in
   makes ESPHome forget runtime-entered credentials on every update.
-* `secrets.yaml` is never committed.
+* `secrets.yaml` is never committed. No personal data in the repository: no real sensor MACs (use made-up ones like
+  `C0:FF:EE:00:12:34`), domains, credentials or e-mail addresses, in files or in commit messages.
+* Commits are authored and committed as `mikkmihkel <66495810+mikkmihkel@users.noreply.github.com>`, the sole
+  contributor. Don't add co-author or AI attribution trailers.
+* `requirements_test.txt` pins the libraries of the tested Home Assistant release exactly. Update them together with
+  `pytest-homeassistant-custom-component`, never one by one.
