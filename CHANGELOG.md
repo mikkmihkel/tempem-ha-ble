@@ -8,13 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-05
+
+### Added
+- **Tempem icon** for the integration and its devices, in light and dark variants (`brand/`). Home Assistant 2026.3
+  and newer load it from the integration itself.
+- The browser installer page shows the Tempem logo, also as its favicon.
+- **Publish installer** workflow: (re)publishes the browser installer from an existing release's firmware, without
+  building or releasing anything (e.g. right after enabling GitHub Pages).
+
+### Changed
+- Sensor devices are shown as **ST1 by Tempem** (model ST1, manufacturer Tempem) instead of "Tempem
+  temperature/humidity beacon by Dusun". Existing devices pick this up on the next restart.
+
 ### Fixed
 - Re-running the release's installer job failed with "Multiple artifacts named github-pages". The Pages artifact is
   now named per attempt.
-
-### Added
-- **Publish installer** workflow: (re)publishes the browser installer from an existing release's firmware, without
-  building or releasing anything (e.g. right after enabling GitHub Pages).
 
 ## [0.2.1] - 2026-10-05
 
@@ -116,7 +125,8 @@ First release.
   `tempem_ble.zip` and the changelog section as notes, after checking that `manifest.json` and this changelog agree.
 - MIT license.
 
-[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/mikkmihkel/tempem-ha-ble/compare/854cc7cdf8d8...v0.2.1
 [0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/54c4ae430bf4...854cc7cdf8d8
 [0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/tree/54c4ae430bf4
