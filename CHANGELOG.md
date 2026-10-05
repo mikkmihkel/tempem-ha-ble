@@ -8,6 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
+### Added
+- **Browser installer for the remote gateway firmware.** Each release now includes a prebuilt firmware, and the
+  installer page (GitHub Pages, ESP Web Tools) flashes it from Chrome/Edge over USB. The same dialog then sets up
+  Wi-Fi (Improv). The release `.factory.bin` also works with web.esphome.io.
+- **Webhook URL set on the gateway's web page** (stored in flash, shown masked), instead of compiled in.
+- **Automatic firmware updates:**
+  - The gateway checks the latest GitHub release every 12 hours and after connecting to Wi-Fi, and installs it.
+  - The image is MD5-checked, and ESP-IDF rolls back a release that doesn't start.
+  - A release is kept only after it has run for 5 minutes. A rolled-back release isn't auto-installed again, and a
+    failed download is retried every 6 hours.
+  - An *Auto-update* switch turns this off. *Check for firmware update* and *Factory reset* buttons were added, as
+    was firmware upload from the web page.
+  - Builds from forks update from the fork's own releases.
+- Release workflow builds the firmware, attaches `tempem-remote-gateway.factory.bin`/`.ota.bin`/`.manifest.json` to
+  the release and deploys the installer page. CI compiles the firmware on every push.
+- Dependabot for GitHub Actions and Python dependencies.
+
+### Changed
+- The gateway firmware is now a single generic build with **no Wi-Fi network compiled in**, so Wi-Fi entered on site
+  is kept across updates. `secrets.yaml` is no longer used. Self-builders can still bake in a webhook URL with
+  `esphome -s webhook_url …`.
+- Gateway hostnames get a MAC suffix (`tempem-remote-xxxxxx`), so several gateways can share a network.
+- The webhook report's `gateway.version` is now the firmware release version (shown as the device's firmware in
+  Home Assistant).
+- The gateway follows HTTP redirects (needed for GitHub downloads). A redirect of the webhook to a Cloudflare Access
+  login page is still reported, as "not acknowledged".
+- The local web page no longer has a password, because a prebuilt firmware has no per-device secrets. The webhook URL
+  is never displayed or logged (`http_request` component logs are off), and the README explains how to add a password
+  in your own build.
+- ESPHome is pinned (`esphome/requirements.txt`, 2026.9.1) for reproducible firmware builds.
+
 ## [0.1.0] - 2026-10-04
 
 First release.
@@ -63,5 +96,6 @@ First release.
   `tempem_ble.zip` and the changelog section as notes, after checking that `manifest.json` and this changelog agree.
 - MIT license.
 
-[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/mikkmihkel/tempem-ha-ble/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mikkmihkel/tempem-ha-ble/releases/tag/v0.1.0
