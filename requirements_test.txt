@@ -5,7 +5,7 @@ pytest-homeassistant-custom-component==0.13.316
 
 # Libraries of the Home Assistant integrations the tests set up
 # (versions as pinned by Home Assistant 2026.2.3).
-bleak==2.1.1
+bleak==3.0.2
 bleak-retry-connector==4.4.3
 bluetooth-adapters==2.1.0
 bluetooth-auto-recovery==1.5.3
